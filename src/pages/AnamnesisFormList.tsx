@@ -6,6 +6,7 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import type { HTMLProps } from 'react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -13,7 +14,8 @@ import {
   deleteAnamnesisForm,
   fetchAnamnesisFormList,
 } from '../services/anamnesisService';
-import type { AnamnesisForm } from '../types/anamnesis';
+import { useAppStore } from '../store';
+import type { AnamnesisForm, FilterProps } from '../types/anamnesis';
 
 function debounce<T extends (...args: any[]) => void>(
   func: T,
@@ -73,6 +75,29 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
   );
 };
 
+function IndeterminateCheckbox({
+  indeterminate,
+  className = '',
+  ...rest
+}: { indeterminate?: boolean } & HTMLProps<HTMLInputElement>) {
+  const ref = React.useRef<HTMLInputElement>(null!);
+
+  React.useEffect(() => {
+    if (typeof indeterminate === 'boolean') {
+      ref.current.indeterminate = !rest.checked && indeterminate;
+    }
+  }, [ref, indeterminate]);
+
+  return (
+    <input
+      type="checkbox"
+      ref={ref}
+      className={`${className} cursor-pointer`}
+      {...rest}
+    />
+  );
+}
+
 const ActionButtons: React.FC<{
   row: any;
   onDelete: (id: string) => void;
@@ -104,11 +129,17 @@ const ActionButtons: React.FC<{
   </div>
 );
 
-const AnamnesisFormList: React.FC = () => {
+const AnamnesisFormList: React.FC<FilterProps> = ({
+  globalFilter,
+  setGlobalFilter,
+}) => {
   const [forms, setForms] = useState<AnamnesisForm[]>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [formToDelete, setFormToDelete] = useState<string | null>(null);
+  const [rowSelection, setRowSelection] = useState({});
+  const setSelectedRowsCount = useAppStore(
+    (state) => state.setSelectedRowsCount
+  );
   const navigate = useNavigate();
 
   const handleDeleteClick = (id: string) => {
@@ -131,6 +162,25 @@ const AnamnesisFormList: React.FC = () => {
   };
 
   const columns: ColumnDef<AnamnesisForm>[] = [
+    {
+      id: 'select-col',
+      // eslint-disable-next-line
+      header: ({ table }) => (
+        <IndeterminateCheckbox
+          checked={table.getIsAllRowsSelected()}
+          indeterminate={table.getIsSomeRowsSelected()}
+          onChange={table.getToggleAllRowsSelectedHandler()}
+        />
+      ),
+      // eslint-disable-next-line
+      cell: ({ row }) => (
+        <IndeterminateCheckbox
+          checked={row.getIsSelected()}
+          disabled={!row.getCanSelect()}
+          onChange={row.getToggleSelectedHandler()}
+        />
+      ),
+    },
     {
       header: 'Title',
       accessorKey: 'title',
@@ -165,17 +215,20 @@ const AnamnesisFormList: React.FC = () => {
     getPaginationRowModel: getPaginationRowModel(),
     state: {
       globalFilter,
+      rowSelection,
     },
     onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
     initialState: {
       pagination: {
-        pageSize: 1, // Set the number of items per page to 10
+        pageSize: 10,
       },
     },
   });
 
   const debouncedSearch = useCallback(
-    debounce((term: string) => {
+    debounce((term) => {
       fetchAnamnesisFormList(term).then(setForms);
     }, 300),
     []
@@ -185,9 +238,9 @@ const AnamnesisFormList: React.FC = () => {
     debouncedSearch(globalFilter);
   }, [globalFilter, debouncedSearch]);
 
-  const handleAddNewForm = () => {
-    navigate('/form/create');
-  };
+  useEffect(() => {
+    setSelectedRowsCount(Object.keys(rowSelection).length);
+  }, [rowSelection, setSelectedRowsCount]);
 
   return (
     <div className="container mx-auto p-4">
@@ -196,22 +249,22 @@ const AnamnesisFormList: React.FC = () => {
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
-      <h1 className="mb-4 text-2xl font-bold">Anamnesis Forms</h1>
-      <input
-        type="text"
-        value={globalFilter ?? ''}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        placeholder="Search forms..."
-        className="mb-4 rounded border p-2"
-      />
-      <button
-        onClick={handleAddNewForm}
-        type="button"
-        className="rounded bg-green-500 p-2 text-white hover:bg-green-600"
-      >
-        Add New Form
-      </button>
-      <table className="w-full border-collapse">
+      {/* <h1 className="mb-4 text-2xl font-bold">Anamnesis Forms</h1> */}
+      {/* <input
+          type="text"
+          value={globalFilter ?? ''}
+          onChange={(e) => setGlobalFilter(e.target.value)}
+          placeholder="Search forms..."
+          className="mb-4 rounded border p-2"
+        />
+        <button
+          onClick={handleAddNewForm}
+          type="button"
+          className="rounded bg-green-500 p-2 text-white hover:bg-green-600"
+        >
+          Add New Form
+        </button> */}
+      <table className="w-full table-fixed border-collapse">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>

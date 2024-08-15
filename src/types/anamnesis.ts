@@ -24,3 +24,7 @@ export interface AnamnesisForm {
   createdAt: string;
   sections: Section[];
 }
+export interface FilterProps {
+  globalFilter: string;
+  setGlobalFilter: any;
+}
