@@ -164,6 +164,7 @@ const AnamnesisFormList: React.FC<FilterProps> = ({
   const columns: ColumnDef<AnamnesisForm>[] = [
     {
       id: 'select-col',
+      size: 50,
       // eslint-disable-next-line
       header: ({ table }) => (
         <IndeterminateCheckbox
@@ -264,12 +265,15 @@ const AnamnesisFormList: React.FC<FilterProps> = ({
         >
           Add New Form
         </button> */}
-      <table className="w-full table-fixed border-collapse">
+      <table className="w-full border-collapse">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th key={header.id} className="border p-2">
+              {headerGroup.headers.map((header, index) => (
+                <th
+                  key={header.id}
+                  className={`border p-2 ${index === 0 ? 'w-12' : ''}`}
+                >
                   {flexRender(
                     header.column.columnDef.header,
                     header.getContext()
@@ -282,8 +286,11 @@ const AnamnesisFormList: React.FC<FilterProps> = ({
         <tbody>
           {table.getRowModel().rows.map((row) => (
             <tr key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="border p-2">
+              {row.getVisibleCells().map((cell, index) => (
+                <td
+                  key={cell.id}
+                  className={`border p-2 ${index === 0 ? 'w-12' : ''}`}
+                >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
