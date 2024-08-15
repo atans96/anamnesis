@@ -29,7 +29,7 @@ const NavBar: React.FC<NavBarProps> = ({ globalFilter, setGlobalFilter }) => {
         }}
       >
         <a
-          href="https://localhost:5173/"
+          href="http://localhost:5173/"
           className="flex items-center space-x-3 rtl:space-x-reverse"
         >
           <span className="self-center whitespace-nowrap text-2xl font-semibold dark:text-white">
