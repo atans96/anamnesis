@@ -17,7 +17,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { createAnamnesisForm } from '../services/anamnesisService';
-import type { AnamnesisForm, Question, Section } from '../types/anamnesis';
+import type {
+  AnamnesisForm,
+  Question,
+  QuestionType,
+  Section,
+} from '../types/anamnesis';
 import SortableQuestion from './SortableQuestion';
 import SortableSection from './SortableSection';
 
@@ -122,18 +127,30 @@ const CreateAnamnesisForm: React.FC = () => {
   ) => {
     setForm((prevForm) => ({
       ...prevForm,
-      sections: prevForm.sections.map((section) =>
-        section.id === sectionId
-          ? {
-              ...section,
-              questions: section.questions.map((question) =>
-                question.id === questionId
-                  ? { ...question, [field]: value }
-                  : question
-              ),
+      sections: prevForm.sections.map((section) => {
+        if (section.id !== sectionId) {
+          return section;
+        }
+
+        return {
+          ...section,
+          questions: section.questions.map((question) => {
+            if (question.id !== questionId) {
+              return question;
             }
-          : section
-      ),
+
+            if (field === 'type') {
+              return {
+                ...question,
+                type: value as QuestionType,
+                answer: '', // Reset answer when type changes
+              };
+            }
+
+            return { ...question, [field]: value };
+          }),
+        };
+      }),
     }));
   };
 
